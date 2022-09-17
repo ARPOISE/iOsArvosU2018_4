@@ -240,8 +240,10 @@ namespace GoogleARCore.Examples.AugmentedImage
                 TrackableHit hit;
                 TrackableHitFlags raycastFilter = TrackableHitFlags.PlaneWithinPolygon |
                     TrackableHitFlags.FeaturePointWithSurfaceNormal;
+#if HAS_AR_CORE_2
                 // Allows the depth image to be queried for hit tests.
                 raycastFilter |= TrackableHitFlags.Depth;
+#endif
                 bool foundHit = Frame.Raycast(touch.position.x, touch.position.y, raycastFilter, out hit);
                 if (foundHit)
                 {
@@ -276,6 +278,7 @@ namespace GoogleARCore.Examples.AugmentedImage
                 return;
             }
 
+#if HAS_AR_CORE_2
             // Get updated augmented images for this frame.
             var images = new List<AugmentedImage>();
             Session.GetTrackables<AugmentedImage>(images, TrackableQueryFilter.All);
@@ -364,7 +367,52 @@ namespace GoogleARCore.Examples.AugmentedImage
                     }
                 }
             }
+#else
+            // Get updated augmented images for this frame.
+            var images = new List<AugmentedImage>();
+            Session.GetTrackables<AugmentedImage>(images, TrackableQueryFilter.Updated);
 
+            // Create visualizers and anchors for updated augmented images that are tracking and do not previously
+            // have a visualizer. Remove visualizers for stopped images.
+            foreach (var image in images)
+            {
+                AugmentedImageVisualizer visualizer = null;
+                _visualizers.TryGetValue(image.DatabaseIndex, out visualizer);
+                if (image.TrackingState == TrackingState.Tracking && visualizer == null)
+                {
+                    TriggerObject triggerObject = null;
+                    if (!TriggerObjects.TryGetValue(image.DatabaseIndex, out triggerObject))
+                    {
+                        ErrorMessage = "No trigger object for database index " + image.DatabaseIndex;
+                        return;
+                    }
+                    if (!triggerObject.isActive || triggerObject.layerWebUrl != _layerWebUrl)
+                    {
+                        // This image was loaded for a different layer
+                        continue;
+                    }
+
+                    // Create an anchor to ensure that ARCore keeps tracking this augmented image.
+                    Anchor anchor = image.CreateAnchor(image.CenterPose);
+                    visualizer = Instantiate(AugmentedImageVisualizerPrefab, anchor.transform);
+                    visualizer.Image = image;
+                    visualizer.TriggerObject = triggerObject;
+                    visualizer.ArBehaviour = this;
+                    visualizer.TriggerObject.LastUpdateTime = DateTime.Now;
+
+                    _visualizers.Add(image.DatabaseIndex, visualizer);
+                }
+                else if (image.TrackingState == TrackingState.Tracking && visualizer != null)
+                {
+                    visualizer.TriggerObject.LastUpdateTime = DateTime.Now;
+                }
+                else if (image.TrackingState == TrackingState.Stopped && visualizer != null)
+                {
+                    _visualizers.Remove(image.DatabaseIndex);
+                    GameObject.Destroy(visualizer.gameObject);
+                }
+            }
+#endif
             // Delete non active image visualizers
             foreach (var visualizer in _visualizers.Values.ToList())
             {
