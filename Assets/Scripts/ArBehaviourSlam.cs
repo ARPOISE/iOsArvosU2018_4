@@ -1,5 +1,5 @@
 ﻿/*
-ArBehaviourSlam.cs - MonoBehaviour for ARpoise slam handling.
+ArBehaviourSlam.cs - MonoBehaviour for ARpoise - Simultaneous localization and mapping (SLAM) - handling.
 
 Copyright (C) 2019, Tamiko Thiel and Peter Graf - All Rights Reserved
 
@@ -61,7 +61,7 @@ namespace com.arpoise.arpoiseapp
         /// </summary>
         public GameObject DetectedPlanePrefab;
 
-        // Slam example game objects
+        // SLAM example game objects
         public GameObject PlaneGenerator;
         public GameObject PlaneDiscovery;
         public GameObject PointCloud;

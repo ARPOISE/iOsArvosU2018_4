@@ -993,7 +993,7 @@ namespace com.arpoise.arpoiseapp
         #region Misc
         protected bool IsSlamUrl(string url)
         {
-            return !string.IsNullOrWhiteSpace(url) && "slam".Equals(url.ToLower().Trim());
+            return !string.IsNullOrWhiteSpace(url) && "SLAM".Equals(url.ToUpper().Trim());
         }
         #endregion
     }
