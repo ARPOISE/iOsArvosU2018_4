@@ -209,6 +209,14 @@ namespace com.arpoise.arpoiseapp
             }
         }
 
+        public int NumberOfActiveAnimations
+        {
+            get
+            {
+                return AllAnimations.Where(x => x.IsActive).Count();
+            }
+        }
+
         public bool HandleAnimations(ArBehaviourArObject arBehaviour, long startTicks, long nowTicks)
         {
             if (_billboardAnimations.Count > 0)
@@ -311,7 +319,7 @@ namespace com.arpoise.arpoiseapp
                         {
                             continue;
                         }
-                        if (animation.HandleSetActive(animationName, true, true))
+                        if (animation.HandleSetActive(animationName, true))
                         {
                             continue;
                         }
@@ -361,6 +369,14 @@ namespace com.arpoise.arpoiseapp
                 }
             }
             return result?.Distinct().ToList();
+        }
+
+        public void HandleApplicationSleep(bool shouldSleep)
+        {
+            foreach (var arAnimation in AllAnimations)
+            {
+                arAnimation.HandleApplicationSleep(shouldSleep);
+            }
         }
     }
 }

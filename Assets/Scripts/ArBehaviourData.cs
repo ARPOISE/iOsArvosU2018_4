@@ -133,7 +133,7 @@ namespace com.arpoise.arpoiseapp
 #endif
 #endif
         private string _os = "Android";
-        private readonly string _bundle = "20220917";
+        private readonly string _bundle = "20230125";
 
         #endregion
 
@@ -177,8 +177,11 @@ namespace com.arpoise.arpoiseapp
                 var nextPageKey = string.Empty;
 
                 IsSlam = false;
+                ApplicationSleepStartMinute = -1;
+                ApplicationSleepEndMinute = -1;
 
                 #region Download all pages of the layer
+
                 var layerWebUrl = LayerWebUrl;
                 LayerWebUrl = null;
                 for (; ; )
@@ -280,13 +283,13 @@ namespace com.arpoise.arpoiseapp
                         break;
                     }
                 }
-                #endregion
+#endregion
 
-                #region Handle the showMenuButton of the layers
+#region Handle the showMenuButton of the layers
                 MenuButtonSetActive = new MenuButtonSetActiveActivity { ArBehaviour = this, Layers = layers.ToList() };
-                #endregion
+#endregion
 
-                #region Download the asset bundle for icons
+#region Download the asset bundle for icons
                 var assetBundleUrls = new HashSet<string>();
                 var iconAssetBundleUrl = "www.arpoise.com/AB/arpoiseicons.ace";
                 assetBundleUrls.Add(iconAssetBundleUrl);
@@ -341,9 +344,9 @@ namespace com.arpoise.arpoiseapp
                     }
                     AssetBundles[url] = assetBundle;
                 }
-                #endregion
+#endregion
 
-                #region Handle lists of possible layers to show
+#region Handle lists of possible layers to show
                 {
                     var itemList = new List<ArItem>();
                     foreach (var layer in layers.Where(x => x.hotspots != null))
@@ -406,9 +409,9 @@ namespace com.arpoise.arpoiseapp
                         continue;
                     }
                 }
-                #endregion
+#endregion
 
-                #region Download all inner layers
+#region Download all inner layers
                 var innerLayers = new Dictionary<string, bool>();
                 foreach (var layer in layers.Where(x => x.hotspots != null))
                 {
@@ -540,9 +543,9 @@ namespace com.arpoise.arpoiseapp
                         }
                     }
                 }
-                #endregion
+#endregion
 
-                #region Download all asset bundles
+#region Download all asset bundles
                 foreach (var layer in layers.Where(x => x.hotspots != null))
                 {
                     assetBundleUrls.UnionWith(layer.hotspots.Where(x => !string.IsNullOrWhiteSpace(x.BaseUrl)).Select(x => x.BaseUrl));
@@ -617,9 +620,9 @@ namespace com.arpoise.arpoiseapp
                     }
                     AssetBundles[url] = assetBundle;
                 }
-                #endregion
+#endregion
 
-                #region Download the trigger images
+#region Download the trigger images
                 var triggerImageUrls = new HashSet<string>();
 
                 foreach (var layer in layers.Where(x => x.hotspots != null))
@@ -705,14 +708,14 @@ namespace com.arpoise.arpoiseapp
                     }
                     TriggerImages[url] = texture;
                 }
-                #endregion
+#endregion
 
-                #region Activate the header
+#region Activate the header
                 var layerTitle = layers.Select(x => x.layerTitle).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
                 HeaderSetActive = new HeaderSetActiveActivity { LayerTitle = layerTitle, ArBehaviour = this };
-                #endregion
+#endregion
 
-                #region Create or handle the object state
+#region Create or handle the object state
                 List<ArObject> existingArObjects = null;
                 var arObjectState = ArObjectState;
                 if (arObjectState != null)
@@ -759,9 +762,9 @@ namespace com.arpoise.arpoiseapp
                     ArObjectState.IsDirty = true;
                 }
                 IsNewLayer = true;
-                #endregion
+#endregion
 
-                #region Wait for refresh
+#region Wait for refresh
                 var refreshInterval = RefreshInterval;
                 var doNotRefresh = refreshInterval < 1;
 
@@ -836,13 +839,13 @@ namespace com.arpoise.arpoiseapp
                     }
                     yield return new WaitForSeconds(.1f);
                 }
-                #endregion
+#endregion
             }
             yield break;
         }
-        #endregion
+#endregion
 
-        #region Misc
+#region Misc
         public virtual void SetMenuButtonActive(List<ArLayer> layers)
         {
         }
@@ -916,6 +919,6 @@ namespace com.arpoise.arpoiseapp
             }
             return url;
         }
-        #endregion
+#endregion
     }
 }

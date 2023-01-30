@@ -628,6 +628,9 @@ namespace com.arpoise.arpoiseapp
             int areaWidth = -1;
             bool applyKalmanFilter = true;
 
+            int applicationSleepStartMinute = -1;
+            int applicationSleepEndMinute = -1;
+
             foreach (var layer in layers)
             {
                 if (applyKalmanFilter && !layer.applyKalmanFilter)
@@ -673,6 +676,17 @@ namespace com.arpoise.arpoiseapp
                     {
                         timeSync = layer.TimeSync;
                     }
+
+                    var layerApplicationSleepStartMinute = layer.ApplicationSleepStartMinute;
+                    if (applicationSleepStartMinute < 0 && layerApplicationSleepStartMinute >= 0)
+                    {
+                        applicationSleepStartMinute = layerApplicationSleepStartMinute;
+                    }
+                    var layerApplicationSleepEndMinute = layer.ApplicationSleepEndMinute;
+                    if (applicationSleepEndMinute < 0 && layerApplicationSleepEndMinute >= 0)
+                    {
+                        applicationSleepEndMinute = layerApplicationSleepEndMinute;
+                    }
                 }
 
                 if (layer.hotspots == null)
@@ -693,6 +707,9 @@ namespace com.arpoise.arpoiseapp
             AreaSize = areaSize;
             AreaWidth = areaWidth;
             TimeSync(timeSync);
+
+            ApplicationSleepStartMinute = applicationSleepStartMinute;
+            ApplicationSleepEndMinute = applicationSleepEndMinute;
 
             bool setBleachingValues = false;
             if (_bleachingValue != bleachingValue)

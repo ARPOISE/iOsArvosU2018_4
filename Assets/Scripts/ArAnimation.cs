@@ -264,14 +264,14 @@ namespace com.arpoise.arpoiseapp
                     break;
 
                 case ArAnimationType.Duplicate:
-                    IsToBeDuplicated = JustActivated;
+                    IsToBeDuplicated |= JustActivated;
                     break;
             }
 
             if (JustActivated)
             {
                 HandleOpenUrl(Name);
-                HandleSetActive(Name, false, true);
+                HandleSetActive(Name, false);
                 HandleAudioSource();
             }
         }
@@ -284,7 +284,7 @@ namespace com.arpoise.arpoiseapp
             IsActive = false;
             if (!_persisting)
             {
-                HandleSetActive(Name, false, false);
+                HandleSetActive(Name, false);
                 switch (_animationType)
                 {
                     case ArAnimationType.Rotate:
@@ -333,33 +333,52 @@ namespace com.arpoise.arpoiseapp
             return false;
         }
 
-        protected static readonly string SetInActive; 
-        public bool HandleSetActive(string s, bool onFollow, bool setOn)
+        protected static readonly string SetInactive; 
+        public bool HandleSetActive(string s, bool onFollow)
         {
             var gameObject = GameObject;
-            if (!string.IsNullOrWhiteSpace(s) && gameObject != null)
+            if (gameObject != null && !string.IsNullOrWhiteSpace(s))
             {
                 if (!onFollow || Name.Equals(s, StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (s.EndsWith(nameof(gameObject.SetActive), StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (gameObject.activeSelf != setOn)
-                        {
-                            gameObject.SetActive(!gameObject.activeSelf);
-                        }
+                        SetActive(gameObject, true);
                         return true;
                     }
-                    if (s.EndsWith(nameof(SetInActive), StringComparison.InvariantCultureIgnoreCase))
+                    if (s.EndsWith(nameof(SetInactive), StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (gameObject.activeSelf == setOn)
-                        {
-                            gameObject.SetActive(!gameObject.activeSelf);
-                        }
+                        SetActive(gameObject, false);
                         return true;
                     }
                 }
             }
             return false;
+        }
+
+        public bool ApplicationIsSleeping { get; private set; }
+
+        public void SetActive(GameObject gameObject, bool active)
+        {
+            if (ApplicationIsSleeping)
+            {
+                active = false;
+            }
+
+            if (gameObject.activeSelf != active)
+            {
+                gameObject.SetActive(active);
+            }
+        }
+
+        public void HandleApplicationSleep(bool shouldSleep)
+        {
+            ApplicationIsSleeping = shouldSleep;
+            var gameObject = GameObject;
+            if (gameObject != null)
+            {
+                SetActive(gameObject, !shouldSleep);
+            }
         }
 
         private void HandleAudioSource()

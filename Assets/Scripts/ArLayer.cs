@@ -241,7 +241,7 @@ namespace com.arpoise.arpoiseapp
                     var action = actions?.FirstOrDefault(x => x.showActivity && nameof(MaximumCount).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
                     if (action != null)
                     {
-                        int value = 0;
+                        int value;
                         if (int.TryParse(action.activityMessage, out value))
                         {
                             _maximumCount = value;
@@ -521,7 +521,11 @@ namespace com.arpoise.arpoiseapp
         }
 
         [NonSerialized]
-        private HashSet<string> _actionLabels = new HashSet<string>(new string[] { nameof(PositionUpdateInterval), nameof(TimeSync) });
+        private readonly HashSet<string> _actionLabels = new HashSet<string>(new string[]
+        {
+            nameof(PositionUpdateInterval), nameof(TimeSync), nameof(ApplicationSleepInterval)
+        });
+
         [NonSerialized]
         private bool? _showInfo;
         public bool ShowInfo
@@ -535,6 +539,7 @@ namespace com.arpoise.arpoiseapp
                 return _showInfo.Value;
             }
         }
+
         [NonSerialized]
         private string _informationMessage;
         public string InformationMessage
@@ -552,6 +557,9 @@ namespace com.arpoise.arpoiseapp
                 return _informationMessage;
             }
         }
+
+        #region ActionLabels
+
         [NonSerialized]
         private float? _positionUpdateInterval;
         public float PositionUpdateInterval
@@ -560,18 +568,16 @@ namespace com.arpoise.arpoiseapp
             {
                 if (_positionUpdateInterval == null)
                 {
+                    _positionUpdateInterval = 0;
+
                     var action = actions?.FirstOrDefault(x => x.showActivity && nameof(PositionUpdateInterval).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
                     if (action != null)
                     {
-                        float value = 0;
+                        float value;
                         if (float.TryParse(action.activityMessage, out value))
                         {
                             _positionUpdateInterval = value;
                         }
-                    }
-                    if (_positionUpdateInterval == null)
-                    {
-                        _positionUpdateInterval = 0;
                     }
                 }
                 return _positionUpdateInterval.Value;
@@ -586,22 +592,140 @@ namespace com.arpoise.arpoiseapp
             {
                 if (_timeSync == null)
                 {
+                    _timeSync = 0;
+
                     var action = actions?.FirstOrDefault(x => x.showActivity && nameof(TimeSync).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
                     if (action != null)
                     {
-                        float value = 0;
+                        float value;
                         if (float.TryParse(action.activityMessage, out value))
                         {
                             _timeSync = value;
                         }
                     }
-                    if (_timeSync == null)
-                    {
-                        _timeSync = 0;
-                    }
                 }
                 return _timeSync.Value;
             }
+        }
+
+        [NonSerialized]
+        private string _applicationSleepInterval;
+        public string ApplicationSleepInterval
+        {
+            get
+            {
+                if (_applicationSleepInterval == null)
+                {
+                    var action = actions?.FirstOrDefault(x => /*x.showActivity &&*/ nameof(ApplicationSleepInterval).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
+                    if (action != null)
+                    {
+                        _applicationSleepInterval = action.activityMessage.Trim();
+                    }
+                }
+                if (_applicationSleepInterval == null)
+                {
+                    _applicationSleepInterval = string.Empty;
+                }
+                return _applicationSleepInterval;
+            }
+        }
+        #endregion
+
+        [NonSerialized]
+        private int? _applicationSleepStartMinute;
+        public int ApplicationSleepStartMinute
+        {
+            get
+            {
+                if (_applicationSleepStartMinute == null)
+                {
+                    _applicationSleepStartMinute = -1;
+
+                    var applicationSleepInterval = ApplicationSleepInterval;
+                    if (!string.IsNullOrWhiteSpace(applicationSleepInterval))
+                    {
+                        var parts = applicationSleepInterval.Split('-');
+                        if (parts.Length > 1)
+                        {
+                            int value;
+                            if (TryParseMinutes(parts[0], out value))
+                            {
+                                _applicationSleepStartMinute = value;
+                            }
+                        }
+                    }
+                }
+                return _applicationSleepStartMinute.Value;
+            }
+        }
+
+        [NonSerialized]
+        private int? _applicationSleepEndMinute;
+        public int ApplicationSleepEndMinute
+        {
+            get
+            {
+                if (_applicationSleepEndMinute == null)
+                {
+                    _applicationSleepEndMinute = -1;
+
+                    var applicationSleepInterval = ApplicationSleepInterval;
+                    if (!string.IsNullOrWhiteSpace(applicationSleepInterval))
+                    {
+                        var parts = applicationSleepInterval.Split('-');
+                        if (parts.Length > 1)
+                        {
+                            int value;
+                            if (TryParseMinutes(parts[1], out value))
+                            {
+                                _applicationSleepEndMinute = value;
+                            }
+                        }
+                    }
+                }
+                return _applicationSleepEndMinute.Value;
+            }
+        }
+
+        private bool TryParseMinutes(string s, out int result)
+        {
+            result = -1;
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return false;
+            }
+            if (s.Contains(':'))
+            {
+                var parts = s.Split(':');
+                if (parts.Length > 0)
+                {
+                    int hours;
+                    if (!int.TryParse(parts[0], out hours))
+                    {
+                        return false;
+                    }
+                    if (parts.Length > 1)
+                    {
+                        int minutes;
+                        if (!int.TryParse(parts[1], out minutes))
+                        {
+                            return false;
+                        }
+                        result = hours * 60 + minutes;
+                        return true;
+                    }
+                    result = hours * 60;
+                    return true;
+                }
+                return false;
+            }
+
+            if (int.TryParse(s, out result))
+            {
+                result *= 60;
+                return true;
+            }
+            return false;
         }
     }
 }

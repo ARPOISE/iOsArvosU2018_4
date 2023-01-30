@@ -535,6 +535,10 @@ namespace com.arpoise.arpoiseapp
                 DurationStretchFactor = (_timeSync + restTime) / _timeSync;
             }
         }
+
+        protected int ApplicationSleepStartMinute = -1;
+        protected int ApplicationSleepEndMinute = -1;
+        protected bool ApplicationIsSleeping = false;
         #endregion
 
         #region Misc
@@ -606,6 +610,6 @@ namespace com.arpoise.arpoiseapp
                 _variance = (1 - k) * _variance;
             }
         }
-        #endregion
+#endregion
     }
 }
