@@ -29,6 +29,7 @@ ARpoise, see www.ARpoise.com/
 */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -84,6 +85,29 @@ namespace com.arpoise.arpoiseapp
         protected readonly List<TriggerObject> SlamObjects = new List<TriggerObject>();
         protected volatile RefreshRequest RefreshRequest = null;
         #endregion
+
+        [NonSerialized]
+        public volatile bool TakeScreenshot = false;
+        protected IEnumerator TakeScreenshotRoutine()
+        {
+            for (; ; )
+            {
+                while (!TakeScreenshot)
+                {
+                    yield return new WaitForSeconds(.01f);
+                }
+                if (AllowTakeScreenshot < 1)
+                {
+                    TakeScreenshot = false;
+                    continue;
+                }
+
+                var name = $"Screenshot_{DateTime.Now:yyMMdd_HHmmss_fff}.jpg";
+                ScreenCapture.CaptureScreenshot(name, AllowTakeScreenshot);
+
+                TakeScreenshot = false;
+            }
+        }
 
         #region ArObjects
         public GameObject CreateObject(GameObject objectToAdd)
@@ -627,6 +651,7 @@ namespace com.arpoise.arpoiseapp
             int areaSize = -1;
             int areaWidth = -1;
             bool applyKalmanFilter = true;
+            int allowTakeScreenshot = -1;
 
             int applicationSleepStartMinute = -1;
             int applicationSleepEndMinute = -1;
@@ -676,6 +701,10 @@ namespace com.arpoise.arpoiseapp
                     {
                         timeSync = layer.TimeSync;
                     }
+                    if (allowTakeScreenshot <= 0)
+                    {
+                        allowTakeScreenshot = layer.AllowTakeScreenshot;
+                    }
 
                     var layerApplicationSleepStartMinute = layer.ApplicationSleepStartMinute;
                     if (applicationSleepStartMinute < 0 && layerApplicationSleepStartMinute >= 0)
@@ -706,6 +735,7 @@ namespace com.arpoise.arpoiseapp
             PositionUpdateInterval = positionUpdateInterval;
             AreaSize = areaSize;
             AreaWidth = areaWidth;
+            AllowTakeScreenshot = allowTakeScreenshot;
             TimeSync(timeSync);
 
             ApplicationSleepStartMinute = applicationSleepStartMinute;

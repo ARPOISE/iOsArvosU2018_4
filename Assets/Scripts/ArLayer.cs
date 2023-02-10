@@ -523,7 +523,7 @@ namespace com.arpoise.arpoiseapp
         [NonSerialized]
         private readonly HashSet<string> _actionLabels = new HashSet<string>(new string[]
         {
-            nameof(PositionUpdateInterval), nameof(TimeSync), nameof(ApplicationSleepInterval)
+            nameof(PositionUpdateInterval), nameof(TimeSync), nameof(ApplicationSleepInterval), nameof(AllowTakeScreenshot)
         });
 
         [NonSerialized]
@@ -574,7 +574,7 @@ namespace com.arpoise.arpoiseapp
                     if (action != null)
                     {
                         float value;
-                        if (float.TryParse(action.activityMessage, out value))
+                        if (float.TryParse(action.activityMessage.Trim(), out value))
                         {
                             _positionUpdateInterval = value;
                         }
@@ -598,7 +598,7 @@ namespace com.arpoise.arpoiseapp
                     if (action != null)
                     {
                         float value;
-                        if (float.TryParse(action.activityMessage, out value))
+                        if (float.TryParse(action.activityMessage.Trim(), out value))
                         {
                             _timeSync = value;
                         }
@@ -629,6 +629,33 @@ namespace com.arpoise.arpoiseapp
                 return _applicationSleepInterval;
             }
         }
+
+        [NonSerialized]
+        private int? _allowTakeScreenshot;
+        public int AllowTakeScreenshot
+        {
+            get
+            {
+                if (_allowTakeScreenshot == null)
+                {
+                    var action = actions?.FirstOrDefault(x => /*x.showActivity &&*/ nameof(AllowTakeScreenshot).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
+                    if (action != null)
+                    {
+                        int value;
+                        if (int.TryParse(action.activityMessage.Trim(), out value))
+                        {
+                            _allowTakeScreenshot = value;
+                        }
+                    }
+                }
+                if (_allowTakeScreenshot == null)
+                {
+                    _allowTakeScreenshot = 0;
+                }
+                return _allowTakeScreenshot.Value;
+            }
+        }
+
         #endregion
 
         [NonSerialized]

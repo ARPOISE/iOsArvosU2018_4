@@ -80,6 +80,8 @@ namespace com.arpoise.arpoiseapp
             StartCoroutine(nameof(GetPosition));
             // Start GetData() coroutine 
             StartCoroutine(nameof(GetData));
+
+            StartCoroutine(nameof(TakeScreenshotRoutine));
         }
         #endregion
 

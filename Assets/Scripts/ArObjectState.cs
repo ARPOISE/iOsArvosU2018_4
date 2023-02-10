@@ -29,6 +29,7 @@ ARpoise, see www.ARpoise.com/
 */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -349,6 +350,11 @@ namespace com.arpoise.arpoiseapp
                         DestroyArObject(arObject);
                     }
                 }
+            }
+
+            if (!hit && Input.GetMouseButtonDown(0))
+            {
+                arBehaviour.TakeScreenshot = true;
             }
             return hit;
         }

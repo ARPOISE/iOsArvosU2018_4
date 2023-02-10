@@ -179,6 +179,7 @@ namespace com.arpoise.arpoiseapp
                 IsSlam = false;
                 ApplicationSleepStartMinute = -1;
                 ApplicationSleepEndMinute = -1;
+                AllowTakeScreenshot = -1;
 
                 #region Download all pages of the layer
 

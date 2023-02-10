@@ -539,6 +539,7 @@ namespace com.arpoise.arpoiseapp
         protected int ApplicationSleepStartMinute = -1;
         protected int ApplicationSleepEndMinute = -1;
         protected bool ApplicationIsSleeping = false;
+        protected int AllowTakeScreenshot = -1;
         #endregion
 
         #region Misc
