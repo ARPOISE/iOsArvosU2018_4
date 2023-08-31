@@ -29,7 +29,6 @@ ARpoise, see www.ARpoise.com/
 */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -242,7 +241,7 @@ namespace com.arpoise.arpoiseapp
                 var ray = cameraMain.ScreenPointToRay(new Vector3(cameraMain.pixelWidth / 2, cameraMain.pixelHeight / 2, 0f));
 
                 RaycastHit hitInfo;
-                if (Physics.Raycast(ray, out hitInfo, 1500f))
+                if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity))
                 {
                     var objectHit = hitInfo.transform.gameObject;
                     if (objectHit != null)
@@ -274,7 +273,7 @@ namespace com.arpoise.arpoiseapp
                 var ray = cameraMain.ScreenPointToRay(Input.mousePosition);
 
                 RaycastHit hitInfo;
-                if (Physics.Raycast(ray, out hitInfo, 1500f))
+                if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity))
                 {
                     var objectHit = hitInfo.transform.gameObject;
                     if (objectHit != null)

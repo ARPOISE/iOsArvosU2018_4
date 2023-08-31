@@ -34,6 +34,9 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+#if HAS_AR_FOUNDATION_4_2
+using UnityEngine.XR.ARSubsystems;
+#endif
 
 namespace com.arpoise.arpoiseapp
 {
@@ -112,12 +115,11 @@ namespace com.arpoise.arpoiseapp
         {
             get
             {
-                var relativePosition = relativeLocation;
-                if (string.IsNullOrWhiteSpace(relativePosition))
+                if (string.IsNullOrWhiteSpace(relativeLocation))
                 {
                     return new float[] { 0, 0, 0 };
                 }
-                var parts = relativePosition.Split(',');
+                var parts = relativeLocation.Split(',');
 
                 double value;
                 var xOffset = (float)(parts.Length > 0 && double.TryParse(parts[0].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out value) ? value : 0);
@@ -249,6 +251,44 @@ namespace com.arpoise.arpoiseapp
                     }
                 }
                 return _maximumCount.Value;
+            }
+        }
+
+        [NonSerialized]
+        private string _allAugmentsPlaced = null;
+        public string AllAugmentsPlaced
+        {
+            get
+            {
+                if (_allAugmentsPlaced is null)
+                {
+                    _allAugmentsPlaced = string.Empty;
+                    var action = actions?.FirstOrDefault(x => x.showActivity && nameof(AllAugmentsPlaced).Equals(x.label?.Trim()));
+                    if (action != null)
+                    {
+                        _allAugmentsPlaced = action.activityMessage ?? string.Empty;
+                    }
+                }
+                return _allAugmentsPlaced;
+            }
+        }
+
+        [NonSerialized]
+        private string _requestedDetectionMode = null;
+        public string RequestedDetectionMode
+        {
+            get
+            {
+                if (_requestedDetectionMode is null)
+                {
+                    _requestedDetectionMode = string.Empty;
+                    var action = actions?.FirstOrDefault(x => x.showActivity && nameof(RequestedDetectionMode).Equals(x.label?.Trim()));
+                    if (action != null)
+                    {
+                        _requestedDetectionMode = action.activityMessage ?? string.Empty;
+                    }
+                }
+                return _requestedDetectionMode;
             }
         }
 
@@ -523,7 +563,11 @@ namespace com.arpoise.arpoiseapp
         [NonSerialized]
         private readonly HashSet<string> _actionLabels = new HashSet<string>(new string[]
         {
-            nameof(PositionUpdateInterval), nameof(TimeSync), nameof(ApplicationSleepInterval), nameof(AllowTakeScreenshot)
+            nameof(PositionUpdateInterval), nameof(TimeSync), nameof(ApplicationSleepInterval), nameof(AllowTakeScreenshot),
+            "OcclusionEnvironmentDepthMode",
+            "OcclusionPreferenceMode",
+            "OcclusionHumanSegmentationStencilMode",
+            "OcclusionHumanSegmentationDepthMode"
         });
 
         [NonSerialized]
@@ -568,8 +612,6 @@ namespace com.arpoise.arpoiseapp
             {
                 if (_positionUpdateInterval == null)
                 {
-                    _positionUpdateInterval = 0;
-
                     var action = actions?.FirstOrDefault(x => x.showActivity && nameof(PositionUpdateInterval).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
                     if (action != null)
                     {
@@ -578,6 +620,10 @@ namespace com.arpoise.arpoiseapp
                         {
                             _positionUpdateInterval = value;
                         }
+                    }
+                    if (_positionUpdateInterval == null)
+                    {
+                        _positionUpdateInterval = 0;
                     }
                 }
                 return _positionUpdateInterval.Value;
@@ -592,8 +638,6 @@ namespace com.arpoise.arpoiseapp
             {
                 if (_timeSync == null)
                 {
-                    _timeSync = 0;
-
                     var action = actions?.FirstOrDefault(x => x.showActivity && nameof(TimeSync).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
                     if (action != null)
                     {
@@ -602,6 +646,10 @@ namespace com.arpoise.arpoiseapp
                         {
                             _timeSync = value;
                         }
+                    }
+                    if (_timeSync == null)
+                    {
+                        _timeSync = 0;
                     }
                 }
                 return _timeSync.Value;
@@ -656,6 +704,88 @@ namespace com.arpoise.arpoiseapp
             }
         }
 
+#if HAS_AR_FOUNDATION_4_2
+        [NonSerialized]
+        private EnvironmentDepthMode? _occlusionEnvironmentDepthMode = null;
+        public EnvironmentDepthMode OcclusionEnvironmentDepthMode
+        {
+            get
+            {
+                if (_occlusionEnvironmentDepthMode == null)
+                {
+                    _occlusionEnvironmentDepthMode = EnvironmentDepthMode.Best;
+                    var value = _occlusionEnvironmentDepthMode.Value;
+                    var action = actions?.FirstOrDefault(x => x.showActivity && nameof(OcclusionEnvironmentDepthMode).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
+                    if (action != null && Enum.TryParse(action.activityMessage, out value))
+                    {
+                        _occlusionEnvironmentDepthMode = value;
+                    }
+                    
+                }
+                return _occlusionEnvironmentDepthMode.Value;
+            }
+        }
+
+        [NonSerialized]
+        private OcclusionPreferenceMode? _occlusionPreferenceMode = null;
+        public OcclusionPreferenceMode OcclusionPreferenceMode
+        {
+            get
+            {
+                if (_occlusionPreferenceMode == null)
+                {
+                    _occlusionPreferenceMode = OcclusionPreferenceMode.PreferEnvironmentOcclusion;
+                    var value = _occlusionPreferenceMode.Value;
+                    var action = actions?.FirstOrDefault(x => x.showActivity && nameof(OcclusionPreferenceMode).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
+                    if (action != null && Enum.TryParse(action.activityMessage, out value))
+                    {
+                        _occlusionPreferenceMode = value;
+                    }
+                }
+                return _occlusionPreferenceMode.Value;
+            }
+        }
+
+        [NonSerialized]
+        private HumanSegmentationStencilMode? _occlusionHumanSegmentationStencilMode = null;
+        public HumanSegmentationStencilMode OcclusionHumanSegmentationStencilMode
+        {
+            get
+            {
+                if (_occlusionHumanSegmentationStencilMode == null)
+                {
+                    _occlusionHumanSegmentationStencilMode = HumanSegmentationStencilMode.Best;
+                    var value = _occlusionHumanSegmentationStencilMode.Value;
+                    var action = actions?.FirstOrDefault(x => x.showActivity && nameof(OcclusionHumanSegmentationStencilMode).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
+                    if (action != null && Enum.TryParse(action.activityMessage, out value))
+                    {
+                        _occlusionHumanSegmentationStencilMode = value;
+                    }
+                }
+                return _occlusionHumanSegmentationStencilMode.Value;
+            }
+        }
+
+        [NonSerialized]
+        private HumanSegmentationDepthMode? _occlusionHumanSegmentationDepthMode = null;
+        public HumanSegmentationDepthMode OcclusionHumanSegmentationDepthMode
+        {
+            get
+            {
+                if (_occlusionHumanSegmentationDepthMode == null)
+                {
+                    _occlusionHumanSegmentationDepthMode = HumanSegmentationDepthMode.Best;
+                    var value = _occlusionHumanSegmentationDepthMode.Value;
+                    var action = actions?.FirstOrDefault(x => x.showActivity && nameof(OcclusionHumanSegmentationDepthMode).Equals(x.label?.Trim()) && !string.IsNullOrWhiteSpace(x.activityMessage));
+                    if (action != null && Enum.TryParse(action.activityMessage, out value))
+                    {
+                        _occlusionHumanSegmentationDepthMode = value;
+                    }
+                }
+                return _occlusionHumanSegmentationDepthMode.Value;
+            }
+        }
+#endif
         #endregion
 
         [NonSerialized]

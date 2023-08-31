@@ -35,6 +35,9 @@ using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
+#if HAS_AR_FOUNDATION_4_2
+using UnityEngine.XR.ARSubsystems;
+#endif
 
 namespace com.arpoise.arpoiseapp
 {
@@ -129,11 +132,15 @@ namespace com.arpoise.arpoiseapp
 #if HAS_AR_KIT
         private readonly string _clientApplicationName = ArvosApplicationName;
 #else
+#if AndroidArvosU2021_3 || iOsArvosU2021_3
+        private readonly string _clientApplicationName = ArvosApplicationName;
+#else
         private readonly string _clientApplicationName = ArpoiseApplicationName;
 #endif
 #endif
+#endif
         private string _os = "Android";
-        private readonly string _bundle = "20230125";
+        private readonly string _bundle = "20230610";
 
         #endregion
 
@@ -211,7 +218,8 @@ namespace com.arpoise.arpoiseapp
                     //Debug.Log("Webrequest sent " + url);
 
                     var maxWait = request.timeout * 100;
-                    while (!(request.isNetworkError || request.isHttpError) && !request.isDone && maxWait > 0)
+                    while (!(request.isNetworkError || request.isHttpError)
+                        && !request.isDone && maxWait > 0)
                     {
                         yield return new WaitForSeconds(.01f);
                         maxWait--;
@@ -227,16 +235,35 @@ namespace com.arpoise.arpoiseapp
                         break;
                     }
 
-                    if (request.isNetworkError || request.isHttpError)
+                    if (request.isNetworkError)
                     {
                         if (setError)
                         {
-                            ErrorMessage = "Layer '" + layerName + "': " + request.error;
+                            ErrorMessage = "Layer '" + layerName + "': NetworkError, " + request.error;
                             yield break;
                         }
                         break;
                     }
-
+                    if (request.isHttpError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Layer '" + layerName + "': HttpError, " + request.error;
+                            yield break;
+                        }
+                        break;
+                    }
+#if HAS_AR_FOUNDATION_4_2
+                    if (request.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Layer '" + layerName + "': DataProcessingError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#endif
                     var text = request.downloadHandler.text;
                     if (string.IsNullOrWhiteSpace(text))
                     {
@@ -286,11 +313,11 @@ namespace com.arpoise.arpoiseapp
                 }
 #endregion
 
-#region Handle the showMenuButton of the layers
+                #region Handle the showMenuButton of the layers
                 MenuButtonSetActive = new MenuButtonSetActiveActivity { ArBehaviour = this, Layers = layers.ToList() };
-#endregion
+                #endregion
 
-#region Download the asset bundle for icons
+                #region Download the asset bundle for icons
                 var assetBundleUrls = new HashSet<string>();
                 var iconAssetBundleUrl = "www.arpoise.com/AB/arpoiseicons.ace";
                 assetBundleUrls.Add(iconAssetBundleUrl);
@@ -307,7 +334,8 @@ namespace com.arpoise.arpoiseapp
                     yield return request.SendWebRequest();
 
                     var maxWait = request.timeout * 100;
-                    while (!(request.isNetworkError || request.isHttpError) && !request.isDone && maxWait > 0)
+                    while (!(request.isNetworkError || request.isHttpError)
+                        && !request.isDone && maxWait > 0)
                     {
                         yield return new WaitForSeconds(.01f);
                         maxWait--;
@@ -322,17 +350,35 @@ namespace com.arpoise.arpoiseapp
                         }
                         continue;
                     }
-
-                    if (request.isNetworkError || request.isHttpError)
+                    if (request.isNetworkError)
                     {
                         if (setError)
                         {
-                            ErrorMessage = "Icons '" + assetBundleUri + "': " + request.error;
+                            ErrorMessage = "Icons '" + assetBundleUri + "': NetworkError, " + request.error;
                             yield break;
                         }
                         continue;
                     }
-
+                    if (request.isHttpError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Icons '" + assetBundleUri + "': HttpError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#if HAS_AR_FOUNDATION_4_2
+                    if (request.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Icons '" + assetBundleUri + "': DataProcessingError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#endif
                     var assetBundle = DownloadHandlerAssetBundle.GetContent(request);
                     if (assetBundle == null)
                     {
@@ -345,9 +391,9 @@ namespace com.arpoise.arpoiseapp
                     }
                     AssetBundles[url] = assetBundle;
                 }
-#endregion
+                #endregion
 
-#region Handle lists of possible layers to show
+                #region Handle lists of possible layers to show
                 {
                     var itemList = new List<ArItem>();
                     foreach (var layer in layers.Where(x => x.hotspots != null))
@@ -410,9 +456,9 @@ namespace com.arpoise.arpoiseapp
                         continue;
                     }
                 }
-#endregion
+                #endregion
 
-#region Download all inner layers
+                #region Download all inner layers
                 var innerLayers = new Dictionary<string, bool>();
                 foreach (var layer in layers.Where(x => x.hotspots != null))
                 {
@@ -466,7 +512,8 @@ namespace com.arpoise.arpoiseapp
                         yield return request.SendWebRequest();
 
                         var maxWait = request.timeout * 100;
-                        while (!(request.isNetworkError || request.isHttpError) && !request.isDone && maxWait > 0)
+                        while (!(request.isNetworkError || request.isHttpError)
+                            && !request.isDone && maxWait > 0)
                         {
                             yield return new WaitForSeconds(.01f);
                             maxWait--;
@@ -481,17 +528,35 @@ namespace com.arpoise.arpoiseapp
                             }
                             break;
                         }
-
-                        if (request.isNetworkError || request.isHttpError)
+                        if (request.isNetworkError)
                         {
                             if (setError)
                             {
-                                ErrorMessage = "Layer '" + innerLayer + "': " + request.error;
+                                ErrorMessage = "Layer '" + innerLayer + "': NetworkError, " + request.error;
                                 yield break;
                             }
                             break;
                         }
-
+                        if (request.isHttpError)
+                        {
+                            if (setError)
+                            {
+                                ErrorMessage = "Layer '" + innerLayer + "': HttpError, " + request.error;
+                                yield break;
+                            }
+                            break;
+                        }
+#if HAS_AR_FOUNDATION_4_2
+                        if (request.result == UnityWebRequest.Result.DataProcessingError)
+                        {
+                            if (setError)
+                            {
+                                ErrorMessage = "Layer '" + innerLayer + "': DataProcessingError, " + request.error;
+                                yield break;
+                            }
+                            continue;
+                        }
+#endif
                         var text = request.downloadHandler.text;
                         if (string.IsNullOrWhiteSpace(text))
                         {
@@ -544,9 +609,9 @@ namespace com.arpoise.arpoiseapp
                         }
                     }
                 }
-#endregion
+                #endregion
 
-#region Download all asset bundles
+                #region Download all asset bundles
                 foreach (var layer in layers.Where(x => x.hotspots != null))
                 {
                     assetBundleUrls.UnionWith(layer.hotspots.Where(x => !string.IsNullOrWhiteSpace(x.BaseUrl)).Select(x => x.BaseUrl));
@@ -583,7 +648,8 @@ namespace com.arpoise.arpoiseapp
                     var request = tuple.Item3;
 
                     var maxWait = request.timeout * 100;
-                    while (!(request.isNetworkError || request.isHttpError) && !request.isDone && maxWait > 0)
+                    while (!(request.isNetworkError || request.isHttpError)
+                        && !request.isDone && maxWait > 0)
                     {
                         yield return new WaitForSeconds(.01f);
                         maxWait--;
@@ -599,16 +665,35 @@ namespace com.arpoise.arpoiseapp
                         continue;
                     }
 
-                    if (request.isNetworkError || request.isHttpError)
+                    if (request.isNetworkError)
                     {
                         if (setError)
                         {
-                            ErrorMessage = "Bundle '" + assetBundleUri + "': " + request.error;
+                            ErrorMessage = "Bundle '" + assetBundleUri + "': NetworkError, " + request.error;
                             yield break;
                         }
                         continue;
                     }
-
+                    if (request.isHttpError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Bundle '" + assetBundleUri + "': HttpError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#if HAS_AR_FOUNDATION_4_2
+                    if (request.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Bundle '" + assetBundleUri + "': DataProcessingError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#endif
                     var assetBundle = DownloadHandlerAssetBundle.GetContent(request);
                     if (assetBundle == null)
                     {
@@ -621,9 +706,9 @@ namespace com.arpoise.arpoiseapp
                     }
                     AssetBundles[url] = assetBundle;
                 }
-#endregion
+                #endregion
 
-#region Download the trigger images
+                #region Download the trigger images
                 var triggerImageUrls = new HashSet<string>();
 
                 foreach (var layer in layers.Where(x => x.hotspots != null))
@@ -671,7 +756,8 @@ namespace com.arpoise.arpoiseapp
                     var request = tuple.Item3;
 
                     var maxWait = request.timeout * 100;
-                    while (!(request.isNetworkError || request.isHttpError) && !request.isDone && maxWait > 0)
+                    while (!(request.isNetworkError || request.isHttpError)
+                        && !request.isDone && maxWait > 0)
                     {
                         yield return new WaitForSeconds(.01f);
                         maxWait--;
@@ -686,17 +772,35 @@ namespace com.arpoise.arpoiseapp
                         }
                         continue;
                     }
-
-                    if (request.isNetworkError || request.isHttpError)
+                    if (request.isNetworkError)
                     {
                         if (setError)
                         {
-                            ErrorMessage = "Image '" + triggerImageUri + "': " + request.error;
+                            ErrorMessage = "Image '" + triggerImageUri + "': NetworkError, " + request.error;
                             yield break;
                         }
                         continue;
                     }
-
+                    if (request.isHttpError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Image '" + triggerImageUri + "': HttpError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#if HAS_AR_FOUNDATION_4_2
+                    if (request.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        if (setError)
+                        {
+                            ErrorMessage = "Image '" + triggerImageUri + "': DataProcessingError, " + request.error;
+                            yield break;
+                        }
+                        continue;
+                    }
+#endif
                     var texture = DownloadHandlerTexture.GetContent(request);
                     if (texture == null)
                     {
@@ -709,14 +813,14 @@ namespace com.arpoise.arpoiseapp
                     }
                     TriggerImages[url] = texture;
                 }
-#endregion
+                #endregion
 
-#region Activate the header
+                #region Activate the header
                 var layerTitle = layers.Select(x => x.layerTitle).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
                 HeaderSetActive = new HeaderSetActiveActivity { LayerTitle = layerTitle, ArBehaviour = this };
-#endregion
+                #endregion
 
-#region Create or handle the object state
+                #region Create or handle the object state
                 List<ArObject> existingArObjects = null;
                 var arObjectState = ArObjectState;
                 if (arObjectState != null)
@@ -763,9 +867,9 @@ namespace com.arpoise.arpoiseapp
                     ArObjectState.IsDirty = true;
                 }
                 IsNewLayer = true;
-#endregion
+                #endregion
 
-#region Wait for refresh
+                #region Wait for refresh
                 var refreshInterval = RefreshInterval;
                 var doNotRefresh = refreshInterval < 1;
 
@@ -840,13 +944,13 @@ namespace com.arpoise.arpoiseapp
                     }
                     yield return new WaitForSeconds(.1f);
                 }
-#endregion
+                #endregion
             }
             yield break;
         }
-#endregion
+        #endregion
 
-#region Misc
+        #region Misc
         public virtual void SetMenuButtonActive(List<ArLayer> layers)
         {
         }
@@ -862,6 +966,44 @@ namespace com.arpoise.arpoiseapp
 
         public virtual void SetHeaderActive(string layerTitle)
         {
+        }
+
+        private string GetAssetBundleUrl(string url)
+        {
+#if UNITY_IOS
+            if (url.EndsWith(".ace"))
+            {
+                url = url.Replace(".ace", "i.ace");
+            }
+            else
+            {
+                url += "i";
+            }
+#endif
+#if HAS_AR_FOUNDATION_4_2
+            if (url.Contains("www.arpoise.com/AB/") && !url.Contains("www.arpoise.com/AB/U2021_3/"))
+            {
+                url = url.Replace("www.arpoise.com/AB/", "www.arpoise.com/AB/U2021_3/");
+            }
+#endif
+            return url;
+        }
+
+        private string FixUrl(string url)
+        {
+            while (url.Contains('\\'))
+            {
+                url = url.Replace("\\", string.Empty);
+            }
+            if (url.StartsWith("http://"))
+            {
+                url = url.Substring(7);
+            }
+            if (!url.StartsWith("https://"))
+            {
+                url = "https://" + url;
+            }
+            return url;
         }
 
 #if UNITY_IOS
@@ -889,37 +1031,6 @@ namespace com.arpoise.arpoiseapp
             }
         }
 #endif
-        private string GetAssetBundleUrl(string url)
-        {
-#if UNITY_IOS
-            if (url.EndsWith(".ace"))
-            {
-                url = url.Replace(".ace", "i.ace");
-            }
-            else
-            {
-                url += "i";
-            }
-#endif
-            return url;
-        }
-
-        private string FixUrl(string url)
-        {
-            while (url.Contains('\\'))
-            {
-                url = url.Replace("\\", string.Empty);
-            }
-            if (url.StartsWith("http://"))
-            {
-                url = url.Substring(7);
-            }
-            if (!url.StartsWith("https://"))
-            {
-                url = "https://" + url;
-            }
-            return url;
-        }
-#endregion
+        #endregion
     }
 }

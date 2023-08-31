@@ -291,6 +291,12 @@
     <Reference Include="UnityEditor.Networking">
       <HintPath>/Volumes/SSD extern/Applications/UnityHub/Ediitor/2018.4.23f1/Unity.app/Contents/UnityExtensions/Unity/Networking/Editor/UnityEditor.Networking.dll</HintPath>
     </Reference>
+    <Reference Include="Vuforia.UnityExtensions.Editor">
+      <HintPath>/Volumes/SSD extern/Applications/UnityHub/Ediitor/2018.4.23f1/PlaybackEngines/VuforiaSupport/Managed/Editor/Vuforia.UnityExtensions.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Vuforia.UnityExtensions">
+      <HintPath>/Volumes/SSD extern/Applications/UnityHub/Ediitor/2018.4.23f1/PlaybackEngines/VuforiaSupport/Managed/Runtime/Vuforia.UnityExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.GoogleAudioSpatializer">
       <HintPath>/Volumes/SSD extern/Applications/UnityHub/Ediitor/2018.4.23f1/Unity.app/Contents/UnityExtensions/Unity/UnityGoogleAudioSpatializer/Editor/UnityEditor.GoogleAudioSpatializer.dll</HintPath>
     </Reference>

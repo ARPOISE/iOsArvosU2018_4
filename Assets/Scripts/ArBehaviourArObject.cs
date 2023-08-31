@@ -39,6 +39,11 @@ using GoogleARCore;
 #else
 #endif
 
+#if HAS_AR_FOUNDATION_4_2
+using UnityEngine.XR.ARSubsystems;
+using UnityEngine.XR.ARFoundation;
+#endif
+
 namespace com.arpoise.arpoiseapp
 {
     public class TriggerObject
@@ -73,6 +78,11 @@ namespace com.arpoise.arpoiseapp
         #region Protecteds
 #if HAS_AR_CORE
         protected AugmentedImageDatabase AugmentedImageDatabase;
+#endif
+#if HAS_AR_FOUNDATION_4_2
+        protected ARTrackedImageManager ArTrackedImageManager;
+        protected MutableRuntimeReferenceImageLibrary ArMutableLibrary;
+        protected ARSessionOrigin ArSessionOriginScript;
 #endif
         protected bool HasTriggerImages = false;
         protected string InformationMessage = null;
@@ -422,24 +432,52 @@ namespace com.arpoise.arpoiseapp
 
             if ((poi.Latitude == 0 && poi.Longitude == 0) || !string.IsNullOrWhiteSpace(relativePosition))
             {
-                // Relative to user or parent
+                var containsPlus = relativePosition.Contains('+');
+                if (containsPlus)
+                {
+                    relativePosition.Replace("+", string.Empty);
+                }
+
+                ArObject arObject;
                 var relativeLocation = poi.poiObject.RelativeLocation;
 
                 var xOffset = relativeLocation[0];
                 var yOffset = relativeLocation[1];
                 var zOffset = relativeLocation[2];
-                var arObject = new ArObject(
-                    poi, arObjectId, poi.title, objectToAdd.name, poi.BaseUrl, wrapper, objectToAdd,
-                    poi.Latitude, poi.Longitude, poi.relativeAlt + yOffset, true);
 
-                var result = LinkArObject(arObjectState, parentObject, parentTransform, arObject, objectToAdd, poi);
-                if (result != null)
+                if (parentObject != null || !containsPlus)
                 {
-                    return result;
+                    // Relative to parent, or relative to user device in meters
+                    arObject = new ArObject(
+                        poi, arObjectId, poi.title, objectToAdd.name, poi.BaseUrl, wrapper, objectToAdd,
+                        poi.Latitude, poi.Longitude, poi.relativeAlt + yOffset, true);
+
+                    var result = LinkArObject(arObjectState, parentObject, parentTransform, arObject, objectToAdd, poi);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+
+                    arObject.WrapperObject.transform.position = arObject.TargetPosition = new Vector3(xOffset, arObject.RelativeAltitude, zOffset);
                 }
+                else
+                {
+                    // Create longitude and latitude relative to user device
+                    var latitude = AddMetersToLatitude(UsedLatitude, zOffset);
+                    var longitude = AddMetersToLongitude(UsedLatitude, UsedLongitude, xOffset);
 
-                arObject.WrapperObject.transform.position = arObject.TargetPosition = new Vector3(xOffset, arObject.RelativeAltitude, zOffset);
+                    arObject = new ArObject(
+                        poi, arObjectId, poi.title, objectToAdd.name, poi.BaseUrl, wrapper, objectToAdd,
+                        latitude, longitude, poi.relativeAlt + yOffset, false);
 
+                    var result = LinkArObject(arObjectState, parentObject, parentTransform, arObject, objectToAdd, poi);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+
+                    arObject.WrapperObject.transform.position = arObject.TargetPosition = new Vector3(xOffset, arObject.RelativeAltitude, zOffset);
+                }
                 if ((!string.IsNullOrWhiteSpace(poi?.title) && poi.title.Contains("bleached"))
                     || (!string.IsNullOrWhiteSpace(parentObject?.Text) && parentObject.Text.Contains("bleached")))
                 {
@@ -559,6 +597,13 @@ namespace com.arpoise.arpoiseapp
                         {
                             TriggerObjects[t.index] = t;
                         }
+
+#if HAS_AR_FOUNDATION_4_2
+                        if (!isSlamUrl)
+                        {
+                            ArMutableLibrary?.ScheduleAddImageWithValidationJob(texture, triggerImageURL, width);
+                        }
+#endif
 #if HAS_AR_CORE
                         if (!isSlamUrl)
                         {
@@ -737,7 +782,9 @@ namespace com.arpoise.arpoiseapp
             AreaWidth = areaWidth;
             AllowTakeScreenshot = allowTakeScreenshot;
             TimeSync(timeSync);
-
+#if HAS_AR_FOUNDATION_4_2
+            EnableOcclusion(layers.FirstOrDefault());
+#endif
             ApplicationSleepStartMinute = applicationSleepStartMinute;
             ApplicationSleepEndMinute = applicationSleepEndMinute;
 

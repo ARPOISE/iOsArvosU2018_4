@@ -32,8 +32,14 @@ using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+
 #if PLATFORM_ANDROID
 using UnityEngine.Android;
+#endif
+
+#if HAS_AR_FOUNDATION_4_2
+using UnityEngine.XR.ARSubsystems;
+using UnityEngine.XR.ARFoundation;
 #endif
 
 namespace com.arpoise.arpoiseapp
@@ -328,6 +334,32 @@ namespace com.arpoise.arpoiseapp
             }
             // End of quest mode
 #endif
+#if AndroidArvosU2021_3_Test
+            //Test mode, set a fixed initial location and forget about the location service
+            //
+            {
+                InitialHeading = 0;
+                FilteredLatitude = OriginalLatitude = 48.158f;
+                FilteredLongitude = OriginalLongitude = 11.58f;
+
+                Debug.Log("Fixed location, lat " + OriginalLatitude + ", lon " + OriginalLongitude);
+
+                var second = DateTime.Now.Ticks / 10000000L;
+                var random = new System.Random((int)second);
+                var nextMove = second + 5 + random.Next(0, 5);
+
+                while (second > 0)
+                {
+                    var arObjectState = ArObjectState;
+                    if (arObjectState != null)
+                    {
+                        PlaceArObjects(arObjectState);
+                    }
+                    yield return new WaitForSeconds(.1f);
+                }
+            }
+            // End of quest mode
+#endif
 #if UNITY_EDITOR
             // If in editor mode, set a fixed initial location and forget about the location service
             //
@@ -453,7 +485,7 @@ namespace com.arpoise.arpoiseapp
                     InitialDeviceOrientation = Input.deviceOrientation;
                 }
 
-                // For the first .2 seconds we remember the initial camera heading
+                // For the first 200 milliseconds we remember the initial camera heading
                 if (CameraIsInitializing && StartTicks > 0 && DateTime.Now.Ticks > StartTicks + 2000000)
                 {
                     CameraIsInitializing = false;
@@ -540,13 +572,42 @@ namespace com.arpoise.arpoiseapp
         protected int ApplicationSleepEndMinute = -1;
         protected bool ApplicationIsSleeping = false;
         protected int AllowTakeScreenshot = -1;
-        #endregion
 
-        #region Misc
+#if HAS_AR_FOUNDATION_4_2
+        public void EnableOcclusion(ArLayer layer)
+        {
+            if (layer is not null)
+            {
+#if UNITY_IOS
+                var occlusionManager = ArCamera.GetComponent<AROcclusionManager>();
+                if (occlusionManager is not null)
+                {
+                    occlusionManager.requestedEnvironmentDepthMode = layer.OcclusionEnvironmentDepthMode;
+                    occlusionManager.requestedOcclusionPreferenceMode = layer.OcclusionPreferenceMode;
+                    occlusionManager.requestedHumanStencilMode = layer.OcclusionHumanSegmentationStencilMode;
+                    occlusionManager.requestedHumanDepthMode = layer.OcclusionHumanSegmentationDepthMode;
+                }
+#endif
+            }
+        }
+#endif
+#endregion
+
+#region Misc
         protected virtual IEnumerator GetData()
         {
             ErrorMessage = "ArBehaviourPosition.GetData needs to be overridden";
             yield break;
+        }
+
+        protected float AddMetersToLatitude(float latitude, float meters)
+        {
+            return latitude + (180 / Mathf.PI) * (meters / 6378137);
+        }
+
+        protected float AddMetersToLongitude(float latitude, float longitude, float meters)
+        {
+            return longitude + (180 / Mathf.PI) * (meters / 6378137) / Mathf.Cos(latitude * Mathf.PI / 180);
         }
 
         // Calculates the distance between two sets of coordinates, taking into account the curvature of the earth

@@ -37,7 +37,9 @@ using UnityEngine;
 #else
 #if QUEST_ARPOISE
 #else
+#if USES_VUFORIA
 using Vuforia;
+#endif
 #endif
 #endif
 #endif
@@ -64,14 +66,15 @@ namespace com.arpoise.arpoiseapp
 #else
 #if QUEST_ARPOISE
 #else
+#if USES_VUFORIA
             ArCamera.GetComponent<VuforiaBehaviour>().enabled = true;
             VuforiaRuntime.Instance.InitVuforia();
 #endif
 #endif
 #endif
+#endif
 
 #if UNITY_IOS_unused
-
             if (dontDestroyOnLoad)
                 DontDestroyOnLoad(this.gameObject);
             DeepLinkReceiverIsAlive(); // Let the App Controller know it's ok to call URLOpened now.
